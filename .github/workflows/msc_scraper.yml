@@ -1,0 +1,44 @@
+# .github/workflows/msc_scraper.yml
+name: MSC Vigo Scraper
+
+on:
+  schedule:
+    # Ejecutar cada 6 horas
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Permitir ejecución manual
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install selenium webdriver-manager
+        sudo apt-get update
+        sudo apt-get install -y wget gnupg unzip
+    
+    - name: Setup Chrome
+      run: |
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+    
+    - name: Run scraper
+      run: python mscok.py
+    
+    - name: Upload CSV results
+      uses: actions/upload-artifact@v4
+      with:
+        name: msc-results
+        path: vigo_msc_*.csv
+        retention-days: 30
